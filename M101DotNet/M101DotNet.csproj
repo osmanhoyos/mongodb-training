@@ -62,6 +62,7 @@
     <Compile Include="Poco\PersonAttr.cs" />
     <Compile Include="Poco\Person.cs" />
     <Compile Include="Poco\Pet.cs" />
+    <Compile Include="Poco\Widget.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

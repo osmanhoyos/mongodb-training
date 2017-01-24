@@ -15,7 +15,7 @@ namespace M101DotNet
     {
         static void Main(string[] args)
         {
-            Updates().GetAwaiter().GetResult();
+            BulkWrite().GetAwaiter().GetResult();
             Console.WriteLine();
             Console.WriteLine("Press Enter");
             Console.ReadLine();
@@ -200,7 +200,7 @@ namespace M101DotNet
             await FilterStronglyObjectSchema(db);
         }
 
-        private static async Task FilterDynamicSchema(IMongoDatabase db)
+        static async Task FilterDynamicSchema(IMongoDatabase db)
         {
             Console.WriteLine("\nDynamic Schema\n");
             
@@ -231,7 +231,7 @@ namespace M101DotNet
             }
         }
 
-        private static async Task FilterStronglyObjectSchema(IMongoDatabase db)
+        static async Task FilterStronglyObjectSchema(IMongoDatabase db)
         {
             Console.WriteLine("\nStrongly Object Schema\n");
             
@@ -255,7 +255,7 @@ namespace M101DotNet
             }
         }
 
-        private static async Task Sort() {
+        static async Task Sort() {
 
             var connectionString = "mongodb://localhost:27017";
             var client = new MongoClient(connectionString);
@@ -263,10 +263,10 @@ namespace M101DotNet
             var db = client.GetDatabase("test");
 
             await SortDynamicSchema(db);
-            await StronglyObjectSchema(db);
+            await SortStronglyObjectSchema(db);
         }
 
-        private static async Task SortDynamicSchema(IMongoDatabase db) {
+        static async Task SortDynamicSchema(IMongoDatabase db) {
             Console.WriteLine("\n Sort Dynamic Schema\n");
 
             var col = db.GetCollection<BsonDocument>("people");
@@ -285,7 +285,7 @@ namespace M101DotNet
             }
         }
 
-        private static async Task StronglyObjectSchema(IMongoDatabase db)
+        static async Task SortStronglyObjectSchema(IMongoDatabase db)
         {
             Console.WriteLine("\nStrongly Object Schema\n");
 
@@ -303,7 +303,7 @@ namespace M101DotNet
             }
         }
 
-        private static async Task Projection() {
+        static async Task Projection() {
             var connectionString = "mongodb://localhost:27017";
             var client = new MongoClient(connectionString);
             var db = client.GetDatabase("test");
@@ -324,10 +324,18 @@ namespace M101DotNet
             }
         }
 
-        private static async Task Updates() {
+        static async Task Updates()
+        {
             var connectionString = "mongodb://localhost:27017";
             var client = new MongoClient(connectionString);
             var db = client.GetDatabase("test");
+            await UpdateDynamicSchema(db);
+            await UpdateStronglyObjectSchema(db);
+        }
+
+        static async Task UpdateDynamicSchema(IMongoDatabase db)
+        {
+            Console.WriteLine("\nUpdate Dynamic Schema\n");
 
             var col = db.GetCollection<BsonDocument>("widgets");
 
@@ -346,23 +354,133 @@ namespace M101DotNet
                 new BsonDocument("x", 30));
 
             //When the document doesn't exist, but the upsert is true, the document is created
+            //Opt 1 
             var result2 = await col.ReplaceOneAsync(
                 new BsonDocument("x", 11),
                 new BsonDocument("x", 40),
-                new UpdateOptions {IsUpsert = true });
+                new UpdateOptions { IsUpsert = true });
 
+            //Opt 2
             var result3 = await col.ReplaceOneAsync(
                 Builders<BsonDocument>.Filter.Eq("x", 5),
                 new BsonDocument("x", 50),
                 new UpdateOptions { IsUpsert = true });
 
+            //Update One
             var result4 = await col.UpdateOneAsync(
                 Builders<BsonDocument>.Filter.Gt("x", 1),
                 //new BsonDocument("$inc", new BsonDocument("x", 10)));
                 Builders<BsonDocument>.Update.Inc("x", 10));
 
+            //Update Many
+            var result5 = await col.UpdateManyAsync(
+                Builders<BsonDocument>.Filter.Gt("x", 5),
+                Builders<BsonDocument>.Update.Inc("x", 20));
+
             await col.Find(new BsonDocument())
                 .ForEachAsync(x => Console.WriteLine(x));
+        }
+
+        static async Task UpdateStronglyObjectSchema(IMongoDatabase db)
+        {
+            Console.WriteLine("\nUpdate Strongly Object Schema\n");
+
+            var col = db.GetCollection<Widget>("widgets");
+
+            await db.DropCollectionAsync("widgets"); //Cleaning the collection
+
+            var docs = Enumerable.Range(0, 10).Select(i => new Widget { Id = i, X = i});
+            await col.InsertManyAsync(docs);
+
+            //var result1 = await col.UpdateManyAsync(
+            //   Builders<Widget>.Filter.Gt("x", 5),
+            //   Builders<Widget>.Update.Inc("x", 20));
+
+            var result1 = await col.UpdateManyAsync(
+               x => x.X > 5,
+               Builders<Widget>.Update.Inc(x => x.X, 20).Set("J", 20));
+
+            await col.Find(new BsonDocument())
+               .ForEachAsync(x => Console.WriteLine(x));
+        }
+
+        static async Task Delete() {
+            var connectionString = "mongodb://localhost:27017";
+            var client = new MongoClient(connectionString);
+            var db = client.GetDatabase("test");
+            var col = db.GetCollection<Widget>("widgets");
+
+            await db.DropCollectionAsync("widgets"); //Cleaning the collection
+            
+            var docs = Enumerable.Range(0, 10).Select(i => new Widget { Id = i, X = i });
+            await col.InsertManyAsync(docs);
+
+            //var result = await col.DeleteOneAsync(x => x.Id > 5); //Delete One
+            var result = await col.DeleteManyAsync(x => x.Id > 5);  //Delete Many
+
+            await col.Find(new BsonDocument())
+                    .ForEachAsync(x => Console.WriteLine(x));
+        }
+
+        static async Task FindAndModify() {
+
+            var connectionString = "mongodb://localhost:27017";
+            var client = new MongoClient(connectionString);
+            var db = client.GetDatabase("test");
+            var col = db.GetCollection<Widget>("widgets");
+
+            await db.DropCollectionAsync("widgets"); //Cleaning the collection
+
+            var docs = Enumerable.Range(0, 10).Select(i => new Widget { Id = i, X = i });
+            await col.InsertManyAsync(docs);
+
+            var result = await col.FindOneAndUpdateAsync<Widget>(
+                x => x.X > 5,
+                Builders<Widget>.Update.Inc(x => x.X, 1),
+                new FindOneAndUpdateOptions<Widget, Widget>
+                {
+                    ReturnDocument = ReturnDocument.After, //ReturnDocument.Before //Show the document after or before the execution of sentence
+                    Sort = Builders<Widget>.Sort.Descending(x => x.X)
+                });
+
+            //FALTA FALTA FALTA
+            //var result2 = await col.FindOneAndReplaceAsync<Widget>(
+            //    x => x.X > 5,
+            //    new FindOneAndReplaceOptions<Widget>
+            //    {
+                    
+            //    });
+
+            //var result = await col.FindOneAndDeleteAsync<Widget>(
+            //    x => x.X > 5,                
+            //    new FindOneAndDeleteOptions<Widget, Widget>
+            //    {
+            //        Sort = Builders<Widget>.Sort.Descending(x => x.X)
+            //    });
+
+            await col.Find(new BsonDocument())
+                    .ForEachAsync(x => Console.WriteLine(x));
+        }
+
+        static async Task BulkWrite() {
+            var connectionString = "mongodb://localhost:27017";
+            var client = new MongoClient(connectionString);
+            var db = client.GetDatabase("test");
+            var col = db.GetCollection<BsonDocument>("widgets");
+
+            await db.DropCollectionAsync("widgets"); //Cleaning the collection
+
+            var docs = Enumerable.Range(0, 10).Select(i => new BsonDocument("_id", i).Add("x", i));
+            await col.InsertManyAsync(docs);
+
+            var result = col.BulkWriteAsync(new WriteModel<BsonDocument>[] {
+                new DeleteOneModel<BsonDocument>("{x: 5}"),
+                new DeleteManyModel<BsonDocument>("{x: {$gt: 7}}"),
+                new UpdateManyModel<BsonDocument>("{x: {$lt: 7}}", "{$inc: {x: 10}}")
+            });
+
+            await col.Find(new BsonDocument())
+                    .ForEachAsync(x => Console.WriteLine(x));
         }
     }
 }
