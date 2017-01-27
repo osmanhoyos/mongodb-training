@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 
-namespace M101DotNet.Poco
+namespace M101DotNet.Training.Poco
 {
     [BsonIgnoreExtraElements]
     public class Widget

@@ -1,4 +1,4 @@
-﻿namespace M101DotNet.Poco
+﻿namespace M101DotNet.Training.Poco
 {
     public class Pet
     {

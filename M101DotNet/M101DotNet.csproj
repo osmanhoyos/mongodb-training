@@ -59,12 +59,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Poco\PersonAttr.cs" />
-    <Compile Include="Poco\Person.cs" />
-    <Compile Include="Poco\Pet.cs" />
-    <Compile Include="Poco\Widget.cs" />
+    <Compile Include="Homework\CRUD\DeleteHomework.cs" />
+    <Compile Include="Training\Poco\PersonAttr.cs" />
+    <Compile Include="Training\Poco\Person.cs" />
+    <Compile Include="Training\Poco\Pet.cs" />
+    <Compile Include="Training\Poco\Widget.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Training\Training.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
