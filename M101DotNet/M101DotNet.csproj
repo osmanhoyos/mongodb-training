@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Homework\CRUD\DeleteHomework.cs" />
+    <Compile Include="Homework\Schema Design\DeleteHomeworkArray.cs" />
     <Compile Include="Training\Poco\PersonAttr.cs" />
     <Compile Include="Training\Poco\Person.cs" />
     <Compile Include="Training\Poco\Pet.cs" />
